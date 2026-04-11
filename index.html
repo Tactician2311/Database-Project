@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MONAvle — Learning Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div id="app" class="app-container">
+
+        <!-- Toast -->
+        <div id="toast" class="toast hidden"></div>
+
+        <!-- Sidebar overlay (mobile) -->
+        <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+        <!-- ── Auth View ─────────────────────── -->
+        <section id="auth-view" class="view active-view flex-center">
+
+            <!-- Dark mode toggle on auth screen -->
+            <button class="theme-toggle" id="auth-theme-toggle" title="Toggle dark mode">
+                <i class="ri-moon-line" id="auth-theme-icon"></i>
+            </button>
+
+            <div class="glass-card auth-card">
+                <div class="auth-header">
+                    <div class="logo">
+                        <i class="ri-graduation-cap-fill"></i>
+                    </div>
+                    <h1 id="auth-title">Welcome Back</h1>
+                    <p id="auth-subtitle">Sign in to your MONAvle account</p>
+                </div>
+
+                <form id="auth-form" class="auth-form">
+                    <div id="register-fields" class="hidden">
+                        <div class="input-group">
+                            <label for="name">Full Name</label>
+                            <input type="text" id="name" placeholder="Enter your full name">
+                        </div>
+                        <div class="input-group">
+                            <label for="role">Role</label>
+                            <select id="role">
+                                <option value="student">Student</option>
+                                <option value="lecturer">Lecturer</option>
+                                <option value="admin">Administrator</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="email">Email Address</label>
+                        <input type="email" id="email" required placeholder="you@institution.edu">
+                    </div>
+                    <div class="input-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" required placeholder="••••••••">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-block mt-3" id="auth-submit-btn">
+                        <i class="ri-login-box-line"></i> Sign In
+                    </button>
+                </form>
+
+                <div class="auth-footer">
+                    <p id="toggle-auth-text">Don't have an account? <a href="#" id="toggle-auth">Sign Up</a></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── Dashboard View ────────────────── -->
+        <section id="dashboard-view" class="view">
+
+            <!-- Sidebar -->
+            <aside class="sidebar glass-panel" id="sidebar">
+                <div class="sidebar-header">
+                    <i class="ri-graduation-cap-fill logo-icon"></i>
+                    <div class="sidebar-brand">
+                        <span>MONAvle</span>
+                        <span class="brand-sub">Learning Platform</span>
+                    </div>
+                </div>
+
+                <div class="sidebar-divider"></div>
+
+                <div class="user-profile">
+                    <div class="avatar" id="avatar-initials"><i class="ri-user-line"></i></div>
+                    <div class="user-info">
+                        <h4 id="display-name">Loading…</h4>
+                        <span id="display-role" class="badge">Role</span>
+                    </div>
+                </div>
+
+                <div class="sidebar-divider"></div>
+
+                <nav class="sidebar-nav">
+                    <p class="nav-section-label">Navigation</p>
+                    <ul>
+                        <li><a href="#" class="nav-link active" data-target="home-panel">
+                                <i class="ri-home-5-line"></i> Dashboard
+                            </a></li>
+                        <li><a href="#" class="nav-link" data-target="courses-panel">
+                                <i class="ri-book-open-line"></i> Courses
+                            </a></li>
+                        <li><a href="#" class="nav-link" data-target="calendar-panel">
+                                <i class="ri-calendar-event-line"></i> Events
+                            </a></li>
+                    </ul>
+                </nav>
+
+                <div class="sidebar-footer">
+                    <button id="logout-btn" class="btn btn-ghost btn-block text-left">
+                        <i class="ri-logout-box-r-line"></i> Sign Out
+                    </button>
+                </div>
+            </aside>
+
+            <!-- Main content -->
+            <main class="main-content">
+                <header class="topbar glass-panel">
+                    <div class="topbar-left">
+                        <div class="mobile-menu-btn" id="mobile-menu-btn"><i class="ri-menu-2-line"></i></div>
+                        <h2 id="current-page-title"><strong>Dashboard</strong></h2>
+                    </div>
+                    <div class="topbar-right">
+                        <button class="topbar-theme-btn" id="dash-theme-toggle" title="Toggle dark mode">
+                            <i class="ri-moon-line" id="dash-theme-icon"></i>
+                        </button>
+                    </div>
+                </header>
+
+                <div class="scroll-container">
+
+                    <!-- ── Home Panel ────────── -->
+                    <div id="home-panel" class="content-panel active-panel fade-in">
+                        <div class="welcome-banner glass-card">
+                            <div class="welcome-text">
+                                <h2>Good to see you again!</h2>
+                                <p>Check your courses and stay on top of your schedule.</p>
+                            </div>
+                            <div class="welcome-day" id="welcome-day"></div>
+                        </div>
+                        <div class="stats-grid" id="dashboard-stats"></div>
+                    </div>
+
+                    <!-- ── Courses Panel ─────── -->
+                    <div id="courses-panel" class="content-panel fade-in">
+                        <div class="panel-header">
+                            <h3>My Courses</h3>
+                            <div style="display:flex;gap:0.75rem">
+                                <button id="btn-create-course" class="btn btn-primary btn-sm hidden">
+                                    <i class="ri-add-line"></i> New Course
+                                </button>
+                                <button id="btn-enroll-course" class="btn btn-outline btn-sm hidden">
+                                    <i class="ri-user-add-line"></i> Enroll
+                                </button>
+                            </div>
+                        </div>
+                        <div class="grid-cards" id="courses-list"></div>
+                    </div>
+
+                    <!-- ── Course Detail ─────── -->
+                    <div id="course-detail-panel" class="content-panel fade-in">
+                        <div class="panel-header with-back">
+                            <button class="btn btn-ghost btn-icon back-to-courses">
+                                <i class="ri-arrow-left-line"></i>
+                            </button>
+                            <h3 id="detail-course-title">Course Title</h3>
+                        </div>
+
+                        <div class="course-tabs">
+                            <button class="tab-btn active" data-tab="content">
+                                <i class="ri-book-2-line"></i> Content
+                            </button>
+                            <button class="tab-btn" data-tab="forums">
+                                <i class="ri-discuss-line"></i> Forums
+                            </button>
+                            <button class="tab-btn" data-tab="assignments">
+                                <i class="ri-task-line"></i> Assignments
+                            </button>
+                            <button class="tab-btn" data-tab="members">
+                                <i class="ri-group-line"></i> Members
+                            </button>
+                        </div>
+
+                        <div class="tab-content">
+                            <!-- Content -->
+                            <div id="tab-content" class="tab-pane active">
+                                <div class="sections-list" id="course-sections"></div>
+                                <div class="section-actions mt-3">
+                                    <button id="btn-add-section" class="btn btn-outline btn-sm hidden">
+                                        <i class="ri-add-line"></i> Add Section
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Forums -->
+                            <div id="tab-forums" class="tab-pane">
+                                <div id="course-forums"></div>
+                                <button id="btn-add-forum" class="btn btn-outline btn-sm mt-3 hidden">
+                                    <i class="ri-add-line"></i> Create Forum
+                                </button>
+                            </div>
+
+                            <!-- Assignments -->
+                            <div id="tab-assignments" class="tab-pane">
+                                <div id="course-assignments"></div>
+                                <button id="btn-add-assignment" class="btn btn-outline btn-sm mt-3 hidden">
+                                    <i class="ri-add-line"></i> Add Assignment
+                                </button>
+                            </div>
+
+                            <!-- Members -->
+                            <div id="tab-members" class="tab-pane">
+                                <div class="glass-card p-4" id="course-members"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ── Calendar Panel ─────── -->
+                    <div id="calendar-panel" class="content-panel fade-in">
+                        <div class="panel-header">
+                            <h3>Events & Calendar</h3>
+                            <button id="btn-add-event" class="btn btn-primary btn-sm hidden">
+                                <i class="ri-add-line"></i> New Event
+                            </button>
+                        </div>
+                        <div class="calendar-container glass-card">
+                            <div class="calendar-header">
+                                <input type="date" id="event-date-filter" class="form-input" style="max-width:220px">
+                                <button id="btn-load-events" class="btn btn-outline btn-sm">
+                                    <i class="ri-search-line"></i> Load Events
+                                </button>
+                            </div>
+                            <div class="events-list mt-4" id="events-list"></div>
+                        </div>
+                    </div>
+
+                </div><!-- /scroll-container -->
+            </main>
+        </section>
+    </div><!-- /app -->
+
+    <!-- Modal -->
+    <div id="modal-container" class="modal-overlay hidden">
+        <div class="modal-card glass-card">
+            <div class="modal-header">
+                <h3 id="modal-title">Modal Title</h3>
+                <button id="close-modal" class="btn btn-icon btn-ghost">
+                    <i class="ri-close-line"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="modal-body"></div>
+        </div>
+    </div>
+
+    <script src="app.js?v=3"></script>
+</body>
+
+</html>
