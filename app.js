@@ -1,4 +1,4 @@
-const API_BASE = 'http://127.0.0.1:5000';
+const API_BASE = 'https://database-project-production-db8c.up.railway.app';
 
 // ── State ──────────────────────────────────────
 let token = localStorage.getItem('nexus_token');
