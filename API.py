@@ -1,14 +1,16 @@
 """
 API.py  –  Course Management System REST API
-Flask + MySQL (raw SQL, no ORM) + JWT Auth
+Flask + MySQL (raw SQL, no ORM) + JWT Auth + Redis Cache
 """
 
 import os
+import json
 import datetime
 from functools import wraps
 
 import bcrypt
 import jwt
+import redis
 import mysql.connector
 from mysql.connector import pooling
 from flask import Flask, request, jsonify, g
@@ -17,6 +19,42 @@ from flask import Flask, request, jsonify, g
 app = Flask(__name__)
 
 SECRET = os.environ.get("JWT_SECRET", "change_this_in_production")
+
+# ── Redis Cache ───────────────────────────────────────────────────────────────
+def get_redis():
+    """Return a Redis client, or None if Redis is not configured."""
+    url = os.environ.get("REDIS_URL")
+    if not url:
+        return None
+    try:
+        r = redis.from_url(url, decode_responses=True, socket_timeout=2)
+        r.ping()
+        return r
+    except Exception:
+        return None
+
+cache = get_redis()
+CACHE_TTL = 300  # 5 minutes
+
+def cache_get(key):
+    if not cache: return None
+    try:
+        val = cache.get(key)
+        return json.loads(val) if val else None
+    except Exception:
+        return None
+
+def cache_set(key, value, ttl=CACHE_TTL):
+    if not cache: return
+    try:
+        cache.setex(key, ttl, json.dumps(value, default=str))
+    except Exception:
+        pass
+
+def cache_delete(key):
+    if not cache: return
+    try: cache.delete(key)
+    except Exception: pass
 
 DB_CONFIG = {
     "host":     os.environ.get("DB_HOST",     "localhost"),
@@ -172,6 +210,9 @@ def get_user(uid):
 # ── Courses ───────────────────────────────────────────────────────────────────
 @app.route("/courses", methods=["GET"])
 def all_courses():
+    cached = cache_get("all_courses")
+    if cached:
+        return jsonify(cached)
     rows = query("""
         SELECT c.course_id, c.title, c.description,
                u.user_id AS lecturer_id, u.name AS lecturer_name
@@ -179,10 +220,15 @@ def all_courses():
         JOIN users u ON c.lecturer_id = u.user_id
         ORDER BY c.course_id
     """)
+    cache_set("all_courses", rows)
     return jsonify(rows)
 
 @app.route("/courses/<int:cid>", methods=["GET"])
 def get_course(cid):
+    key = f"course:{cid}"
+    cached = cache_get(key)
+    if cached:
+        return jsonify(cached)
     row = query_one("""
         SELECT c.course_id, c.title, c.description,
                u.user_id AS lecturer_id, u.name AS lecturer_name
@@ -192,6 +238,7 @@ def get_course(cid):
     """, (cid,))
     if not row:
         return jsonify({"error": "Course not found"}), 404
+    cache_set(key, row)
     return jsonify(row)
 
 @app.route("/courses/lecturer/<int:lid>", methods=["GET"])
@@ -225,6 +272,7 @@ def create_course():
         "INSERT INTO courses (title,description,lecturer_id) VALUES (%s,%s,%s)",
         (d["title"], d.get("description", ""), d["lecturer_id"]), commit=True
     )
+    cache_delete("all_courses")  # invalidate courses cache
     return jsonify({"msg": "Course created", "course_id": cid}), 201
 
 # ── Enroll ────────────────────────────────────────────────────────────────────
