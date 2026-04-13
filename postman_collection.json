@@ -1,0 +1,430 @@
+{
+  "info": {
+    "name": "Course Management System API",
+    "_postman_id": "cms-api-collection-v1",
+    "description": "Complete REST API collection for the Course Management System. Import into Postman and set the `base_url` variable to your server (default: http://127.0.0.1:5000). After login, copy the returned token into the `token` variable.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://127.0.0.1:5000" },
+    { "key": "token",    "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/register",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john.doe@university.edu\",\n  \"password\": \"password123\",\n  \"role\": \"student\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var res = pm.response.json();",
+                  "if (res.token) { pm.collectionVariables.set('token', res.token); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin1@university.edu\",\n  \"password\": \"admin123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/users/1",
+            "header": [{ "key": "Authorization", "value": "{{token}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Courses",
+      "item": [
+        {
+          "name": "Get All Courses",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/courses"
+          }
+        },
+        {
+          "name": "Get Course by ID",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/courses/1"
+          }
+        },
+        {
+          "name": "Get Courses by Lecturer",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/courses/lecturer/4"
+          }
+        },
+        {
+          "name": "Get Courses by Student",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/courses/student/304"
+          }
+        },
+        {
+          "name": "Create Course (Admin only)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/courses",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "{{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Advanced Robotics\",\n  \"description\": \"Hands-on robotics course covering ROS and SLAM.\",\n  \"lecturer_id\": 5\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Enrollment",
+      "item": [
+        {
+          "name": "Enroll Student in Course",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/enroll",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "{{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": 304,\n  \"course_id\": 1\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Course Members",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/members/1",
+            "header": [{ "key": "Authorization", "value": "{{token}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Calendar Events",
+      "item": [
+        {
+          "name": "Get Events for Course",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/events/course/1",
+            "header": [{ "key": "Authorization", "value": "{{token}}" }]
+          }
+        },
+        {
+          "name": "Get Events for Student on Date",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/events/student?user_id=304&date=2025-06-15",
+              "host": ["{{base_url}}"],
+              "path": ["events", "student"],
+              "query": [
+                { "key": "user_id", "value": "304" },
+                { "key": "date",    "value": "2025-06-15" }
+              ]
+            },
+            "header": [{ "key": "Authorization", "value": "{{token}}" }]
+          }
+        },
+        {
+          "name": "Create Calendar Event",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/events",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "{{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"course_id\": 1,\n  \"title\": \"Midterm Examination\",\n  \"type\": \"exam\",\n  \"event_date\": \"2025-10-20\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Forums",
+      "item": [
+        {
+          "name": "Get Forums for Course",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/forums/1",
+            "header": [{ "key": "Authorization", "value": "{{token}}" }]
+          }
+        },
+        {
+          "name": "Create Forum",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/forums",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "{{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"course_id\": 1,\n  \"title\": \"Week 3 Discussion\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Discussion Threads",
+      "item": [
+        {
+          "name": "Get Threads for Forum",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/threads/1",
+            "header": [{ "key": "Authorization", "value": "{{token}}" }]
+          }
+        },
+        {
+          "name": "Get Replies to a Post",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/threads/1/replies",
+            "header": [{ "key": "Authorization", "value": "{{token}}" }]
+          }
+        },
+        {
+          "name": "Create Root Thread Post",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/threads",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "{{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"forum_id\": 1,\n  \"author_id\": 304,\n  \"title\": \"Question about Week 2 content\",\n  \"content\": \"Can someone explain the concept covered in lecture 4?\",\n  \"parent_post_id\": null\n}"
+            }
+          }
+        },
+        {
+          "name": "Reply to Thread Post",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/threads",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "{{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"forum_id\": 1,\n  \"author_id\": 305,\n  \"content\": \"Great question! It refers to the normalization process from week 1.\",\n  \"parent_post_id\": 1\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Course Content",
+      "item": [
+        {
+          "name": "Get Sections (with items) for Course",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/sections/1",
+            "header": [{ "key": "Authorization", "value": "{{token}}" }]
+          }
+        },
+        {
+          "name": "Create Section",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/sections",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "{{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"course_id\": 1,\n  \"title\": \"Module 4 — Advanced Topics\",\n  \"order\": 4\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Items for Section",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/items/1",
+            "header": [{ "key": "Authorization", "value": "{{token}}" }]
+          }
+        },
+        {
+          "name": "Add Item to Section",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/items",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "{{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"section_id\": 1,\n  \"title\": \"Lecture 5 Slides\",\n  \"item_type\": \"slide\",\n  \"content\": \"https://resources.university.edu/course1/lecture5.pdf\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Assignments",
+      "item": [
+        {
+          "name": "Get Assignments for Course",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/assignments/1",
+            "header": [{ "key": "Authorization", "value": "{{token}}" }]
+          }
+        },
+        {
+          "name": "Create Assignment (Lecturer/Admin)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/assignments",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "{{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"course_id\": 1,\n  \"title\": \"Final Project Submission\",\n  \"due_date\": \"2025-12-01\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Submit Assignment (Student)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/submit",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "{{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"assignment_id\": 1,\n  \"student_id\": 304\n}"
+            }
+          }
+        },
+        {
+          "name": "Grade Submission (Lecturer/Admin)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/grade",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "{{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"assignment_id\": 1,\n  \"student_id\": 304,\n  \"grade\": 87.5\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Student Grades & Average",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/grades/student/304",
+            "header": [{ "key": "Authorization", "value": "{{token}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reports",
+      "item": [
+        {
+          "name": "Courses with 50+ Students",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/reports/courses_50_students",
+            "header": [{ "key": "Authorization", "value": "{{token}}" }]
+          }
+        },
+        {
+          "name": "Students in 5+ Courses",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/reports/students_5_courses",
+            "header": [{ "key": "Authorization", "value": "{{token}}" }]
+          }
+        },
+        {
+          "name": "Lecturers Teaching 3+ Courses",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/reports/lecturers_3_courses",
+            "header": [{ "key": "Authorization", "value": "{{token}}" }]
+          }
+        },
+        {
+          "name": "Top 10 Most Enrolled Courses",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/reports/top_10_courses",
+            "header": [{ "key": "Authorization", "value": "{{token}}" }]
+          }
+        },
+        {
+          "name": "Top 10 Students by Average",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/reports/top_10_students",
+            "header": [{ "key": "Authorization", "value": "{{token}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/health"
+      }
+    }
+  ]
+}
