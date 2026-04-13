@@ -1,4 +1,4 @@
-const API_BASE = 'https://database-project-production-db8c.up.railway.app';
+const API_BASE = 'http://127.0.0.1:5000';
 
 // ── State ──────────────────────────────────────
 let token = localStorage.getItem('nexus_token');
@@ -91,8 +91,7 @@ sidebarOverlay.addEventListener('click', () => {
 // ── Auth: toggle login / register ───────────────
 let isLoginMode = true;
 
-document.getElementById('toggle-auth').addEventListener('click', (e) => {
-    e.preventDefault();
+function switchAuthMode() {
     isLoginMode = !isLoginMode;
     document.getElementById('register-fields').classList.toggle('hidden', isLoginMode);
     document.getElementById('auth-title').innerText = isLoginMode ? 'Welcome Back' : 'Create Account';
@@ -100,11 +99,21 @@ document.getElementById('toggle-auth').addEventListener('click', (e) => {
     document.getElementById('auth-submit-btn').innerHTML = isLoginMode
         ? '<i class="ri-login-box-line"></i> Sign In'
         : '<i class="ri-user-add-line"></i> Sign Up';
-    document.getElementById('toggle-auth-text').innerHTML = isLoginMode
-        ? 'Don\'t have an account? <a href="#" id="toggle-auth">Sign Up</a>'
-        : 'Already have an account? <a href="#" id="toggle-auth">Sign In</a>';
-    // Re-attach listener (innerHTML replaced it)
-    document.getElementById('toggle-auth').addEventListener('click', arguments.callee);
+    document.getElementById('toggle-auth-text').innerText = isLoginMode
+        ? "Don't have an account? "
+        : 'Already have an account? ';
+    const link = document.createElement('a');
+    link.href = '#';
+    link.id = 'toggle-auth';
+    link.innerText = isLoginMode ? 'Sign Up' : 'Sign In';
+    link.addEventListener('click', (e) => { e.preventDefault(); switchAuthMode(); });
+    document.getElementById('toggle-auth-text').appendChild(link);
+}
+
+// Attach initial listener
+document.getElementById('toggle-auth').addEventListener('click', (e) => {
+    e.preventDefault();
+    switchAuthMode();
 });
 
 document.getElementById('auth-form').addEventListener('submit', async (e) => {
@@ -131,9 +140,7 @@ document.getElementById('auth-form').addEventListener('submit', async (e) => {
         const res = await apiCall('/register', 'POST', { name, email, password, role });
         if (res && res.msg) {
             showToast('Registration successful! Please sign in.');
-            // Switch to login
-            isLoginMode = false;
-            document.getElementById('toggle-auth').click();
+            if (!isLoginMode) switchAuthMode();
         }
     }
 
