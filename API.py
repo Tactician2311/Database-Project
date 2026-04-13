@@ -33,16 +33,29 @@ pool = pooling.MySQLConnectionPool(
 )
 
 # ── CORS ─────────────────────────────────────────────────────────────────────
+from flask_cors import CORS
+CORS(app)
+
 @app.after_request
 def add_cors(response):
     response.headers["Access-Control-Allow-Origin"]  = "*"
     response.headers["Access-Control-Allow-Headers"] = "Content-Type,Authorization"
     response.headers["Access-Control-Allow-Methods"] = "GET,POST,PUT,DELETE,OPTIONS"
+    response.headers["Access-Control-Max-Age"] = "3600"
     return response
+
+@app.route("/", methods=["OPTIONS", "GET"])
+def root():
+    return jsonify({"status": "ok"}), 200
 
 @app.route("/<path:p>", methods=["OPTIONS"])
 def options_handler(p):
-    return jsonify({}), 200
+    from flask import Response
+    r = Response()
+    r.headers["Access-Control-Allow-Origin"]  = "*"
+    r.headers["Access-Control-Allow-Headers"] = "Content-Type,Authorization"
+    r.headers["Access-Control-Allow-Methods"] = "GET,POST,PUT,DELETE,OPTIONS"
+    return r, 200
 
 # ── DB Helpers ───────────────────────────────────────────────────────────────
 def get_db():
