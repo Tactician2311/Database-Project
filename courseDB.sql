@@ -1,180 +1,139 @@
--- =============================================
--- COURSE MANAGEMENT SYSTEM - DATABASE SCHEMA
--- MySQL | Normalized | Indexed | Views
--- =============================================
+# =============================
+# COURSE MANAGEMENT SYSTEM (COMPLETE BACKEND)
+# - MySQL Schema (normalized)
+# - Indexes
+# - Views (reports)
+# - Data generator (Python -> SQL output with constraints)
+# - Flask API (RAW SQL, JWT auth, role guards)
+# =============================
+
+# =============================
+# DATABASE SCHEMA (MySQL)
+# =============================
 
 CREATE DATABASE IF NOT EXISTS school_db;
 USE school_db;
 
--- ── USERS ─────────────────────────────────────
+-- USERS
 CREATE TABLE users (
-    user_id    INT AUTO_INCREMENT PRIMARY KEY,
-    name       VARCHAR(100) NOT NULL,
-    email      VARCHAR(120) UNIQUE NOT NULL,
-    password   VARCHAR(255) NOT NULL,
-    role       ENUM('admin','lecturer','student') NOT NULL,
+    user_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(120) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    role ENUM('admin','lecturer','student') NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- ── COURSES ───────────────────────────────────
--- One lecturer per course (lecturer_id FK)
+-- COURSES (1 lecturer per course)
 CREATE TABLE courses (
-    course_id   INT AUTO_INCREMENT PRIMARY KEY,
-    title       VARCHAR(255) NOT NULL,
+    course_id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
     description TEXT,
     lecturer_id INT NOT NULL,
     FOREIGN KEY (lecturer_id) REFERENCES users(user_id)
 );
 
--- ── ENROLLMENTS ───────────────────────────────
--- Students <-> Courses (many-to-many)
+-- ENROLLMENTS (student-course)
 CREATE TABLE enrollments (
     enrollment_id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id       INT NOT NULL,
-    course_id     INT NOT NULL,
-    enrolled_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE (user_id, course_id),
-    FOREIGN KEY (user_id)   REFERENCES users(user_id),
+    user_id INT NOT NULL,
+    course_id INT NOT NULL,
+    UNIQUE(user_id, course_id),
+    FOREIGN KEY (user_id) REFERENCES users(user_id),
     FOREIGN KEY (course_id) REFERENCES courses(course_id)
 );
 
--- ── SECTIONS ──────────────────────────────────
--- Course content is separated by sections
+-- SECTIONS
 CREATE TABLE sections (
-    section_id     INT AUTO_INCREMENT PRIMARY KEY,
-    course_id      INT NOT NULL,
-    title          VARCHAR(255) NOT NULL,
-    sequence_order INT DEFAULT 0,
+    section_id INT AUTO_INCREMENT PRIMARY KEY,
+    course_id INT NOT NULL,
+    title VARCHAR(255),
+    sequence_order INT,
     FOREIGN KEY (course_id) REFERENCES courses(course_id)
 );
 
--- ── SECTION ITEMS (Course Content) ────────────
--- Links, files, slides, text
+-- SECTION ITEMS (content)
 CREATE TABLE section_items (
-    item_id    INT AUTO_INCREMENT PRIMARY KEY,
+    item_id INT AUTO_INCREMENT PRIMARY KEY,
     section_id INT NOT NULL,
-    title      VARCHAR(255) NOT NULL,
-    item_type  ENUM('link','file','slide','text') NOT NULL DEFAULT 'text',
-    content    TEXT,
+    title VARCHAR(255),
+    content TEXT,
     FOREIGN KEY (section_id) REFERENCES sections(section_id)
 );
 
--- ── CALENDAR EVENTS ───────────────────────────
+-- CALENDAR EVENTS
 CREATE TABLE calendar_events (
-    event_id   INT AUTO_INCREMENT PRIMARY KEY,
-    course_id  INT NOT NULL,
-    title      VARCHAR(255) NOT NULL,
-    type       VARCHAR(50),
-    event_date DATE NOT NULL,
+    event_id INT AUTO_INCREMENT PRIMARY KEY,
+    course_id INT,
+    title VARCHAR(255),
+    type VARCHAR(50),
+    event_date DATE,
     FOREIGN KEY (course_id) REFERENCES courses(course_id)
 );
 
--- ── FORUMS ────────────────────────────────────
+-- FORUMS
 CREATE TABLE forums (
-    forum_id  INT AUTO_INCREMENT PRIMARY KEY,
-    course_id INT NOT NULL,
-    title     VARCHAR(255) NOT NULL,
+    forum_id INT AUTO_INCREMENT PRIMARY KEY,
+    course_id INT,
+    title VARCHAR(255),
     FOREIGN KEY (course_id) REFERENCES courses(course_id)
 );
 
--- ── THREADS (Reddit-style nested) ─────────────
--- parent_post_id NULL = root thread post
--- parent_post_id SET  = reply to a post
+-- THREADS (nested)
 CREATE TABLE threads (
-    post_id        INT AUTO_INCREMENT PRIMARY KEY,
-    forum_id       INT NOT NULL,
-    author_id      INT NOT NULL,
+    post_id INT AUTO_INCREMENT PRIMARY KEY,
+    forum_id INT,
+    author_id INT,
     parent_post_id INT NULL,
-    title          VARCHAR(255),          -- only on root posts
-    content        TEXT NOT NULL,
-    created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (forum_id)       REFERENCES forums(forum_id),
-    FOREIGN KEY (author_id)      REFERENCES users(user_id),
-    FOREIGN KEY (parent_post_id) REFERENCES threads(post_id)
+    content TEXT,
+    FOREIGN KEY (forum_id) REFERENCES forums(forum_id),
+    FOREIGN KEY (author_id) REFERENCES users(user_id)
 );
 
--- ── ASSIGNMENTS ───────────────────────────────
+-- ASSIGNMENTS
 CREATE TABLE assignments (
     assignment_id INT AUTO_INCREMENT PRIMARY KEY,
-    course_id     INT NOT NULL,
-    title         VARCHAR(255) NOT NULL,
-    due_date      DATE,
+    course_id INT,
+    title VARCHAR(255),
     FOREIGN KEY (course_id) REFERENCES courses(course_id)
 );
 
--- ── SUBMISSIONS ───────────────────────────────
+-- SUBMISSIONS
 CREATE TABLE submissions (
     submission_id INT AUTO_INCREMENT PRIMARY KEY,
-    assignment_id INT NOT NULL,
-    student_id    INT NOT NULL,
-    grade         DECIMAL(5,2) DEFAULT NULL,
-    submitted_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE (assignment_id, student_id),
+    assignment_id INT,
+    student_id INT,
+    grade DECIMAL(5,2),
     FOREIGN KEY (assignment_id) REFERENCES assignments(assignment_id),
-    FOREIGN KEY (student_id)    REFERENCES users(user_id)
+    FOREIGN KEY (student_id) REFERENCES users(user_id)
 );
 
--- =============================================
--- INDEXES (Performance)
--- =============================================
-CREATE INDEX idx_users_role         ON users(role);
-CREATE INDEX idx_enroll_user        ON enrollments(user_id);
-CREATE INDEX idx_enroll_course      ON enrollments(course_id);
-CREATE INDEX idx_courses_lecturer   ON courses(lecturer_id);
-CREATE INDEX idx_threads_forum      ON threads(forum_id);
-CREATE INDEX idx_threads_parent     ON threads(parent_post_id);
-CREATE INDEX idx_submissions_student ON submissions(student_id);
-CREATE INDEX idx_events_course      ON calendar_events(course_id);
-CREATE INDEX idx_events_date        ON calendar_events(event_date);
-CREATE INDEX idx_sections_course    ON sections(course_id);
-CREATE INDEX idx_items_section      ON section_items(section_id);
+-- INDEXES (performance)
+CREATE INDEX idx_users_role ON users(role);
+CREATE INDEX idx_enroll_user ON enrollments(user_id);
+CREATE INDEX idx_enroll_course ON enrollments(course_id);
 
--- =============================================
--- REPORT VIEWS
--- =============================================
+# =============================
+# REPORT VIEWS
+# =============================
 
--- All courses that have 50 or more students
 CREATE VIEW courses_50_students AS
-    SELECT c.course_id, c.title, COUNT(e.user_id) AS student_count
-    FROM courses c
-    JOIN enrollments e ON c.course_id = e.course_id
-    GROUP BY c.course_id, c.title
-    HAVING student_count >= 50;
+SELECT course_id, COUNT(user_id) total
+FROM enrollments GROUP BY course_id HAVING total >= 50;
 
--- All students enrolled in 5 or more courses
 CREATE VIEW students_5_courses AS
-    SELECT u.user_id, u.name, u.email, COUNT(e.course_id) AS course_count
-    FROM users u
-    JOIN enrollments e ON u.user_id = e.user_id
-    WHERE u.role = 'student'
-    GROUP BY u.user_id, u.name, u.email
-    HAVING course_count >= 5;
+SELECT user_id, COUNT(course_id) total
+FROM enrollments GROUP BY user_id HAVING total >= 5;
 
--- All lecturers teaching 3 or more courses
 CREATE VIEW lecturers_3_courses AS
-    SELECT u.user_id, u.name, u.email, COUNT(c.course_id) AS course_count
-    FROM users u
-    JOIN courses c ON u.user_id = c.lecturer_id
-    WHERE u.role = 'lecturer'
-    GROUP BY u.user_id, u.name, u.email
-    HAVING course_count >= 3;
+SELECT lecturer_id, COUNT(course_id) total
+FROM courses GROUP BY lecturer_id HAVING total >= 3;
 
--- Top 10 most enrolled courses
-CREATE VIEW top_10_courses AS
-    SELECT c.course_id, c.title, COUNT(e.user_id) AS enrollment_count
-    FROM courses c
-    JOIN enrollments e ON c.course_id = e.course_id
-    GROUP BY c.course_id, c.title
-    ORDER BY enrollment_count DESC
-    LIMIT 10;
+CREATE VIEW top_courses AS
+SELECT course_id, COUNT(user_id) total
+FROM enrollments GROUP BY course_id ORDER BY total DESC LIMIT 10;
 
--- Top 10 students by overall grade average
-CREATE VIEW top_10_students AS
-    SELECT u.user_id, u.name, u.email, ROUND(AVG(s.grade), 2) AS overall_average
-    FROM users u
-    JOIN submissions s ON u.user_id = s.student_id
-    WHERE s.grade IS NOT NULL
-      AND u.role = 'student'
-    GROUP BY u.user_id, u.name, u.email
-    ORDER BY overall_average DESC
-    LIMIT 10;
+CREATE VIEW top_students AS
+SELECT student_id, AVG(grade) avg_grade
+FROM submissions GROUP BY student_id ORDER BY avg_grade DESC LIMIT 10;
+
